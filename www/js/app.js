@@ -7,16 +7,7 @@ angular.module('quake', ['ionic'])
 
 .run(function($ionicPlatform) {
   $ionicPlatform.ready(function() {
-    if(window.cordova && window.cordova.plugins.Keyboard) {
-      // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
-      // for form inputs)
-      cordova.plugins.Keyboard.hideKeyboardAccessoryBar(true);
-
-      // Don't remove this line unless you know what you are doing. It stops the viewport
-      // from snapping when text inputs are focused. Ionic handles this internally for
-      // a much nicer keyboard experience.
-      cordova.plugins.Keyboard.disableScroll(true);
-    }
+    console.log(document.body.classList.contains('platform-browser'));
     ionic.Platform.fullScreen();
     if(window.StatusBar) {
       StatusBar.styleDefault();
@@ -24,13 +15,14 @@ angular.module('quake', ['ionic'])
   });
 })
 
-.controller('quakeController', function($scope, $ionicGesture){
+.controller('quakeController', function($scope, $ionicGesture, $http){
     
 	var tempData;
 	var count = 20;
     var mag = 1.5;
 	var newQuakes = 0;
 	var interval;
+    var globe = {};
     
     $scope.updateCount = function(c){
         updateCount(c);
@@ -46,54 +38,69 @@ angular.module('quake', ['ionic'])
     }
 	function updateData(c, reset){
         
-	    var url = "http://www.mangoflash.com/quake_JSON.cfm"; // json.php?count='+count
-		$.getJSON(url,{ count: c, myMag:mag}, function(data){
-            if(reset === true){
-                tempData = null;
-                globe.reset();
-            }
-            data = ConvertQuakeData(data.quakes);
-            console.log(data);
-			if(tempData!=null){
-				var td = [];
-				for(var i = 0; i < data.length ; i+=3)
-				{
-					var td0 = data[i];
-					var td1 = data[i+1];
-					var td2 = data[i+2];
-					var add = true;
-					for(var x = 0; x < tempData.length; x+=3)
-					{
-						add = true;
-						if(td0 == tempData[x] &&
-							td1 == tempData[x+1] &&
-							td2 == tempData[x+2])
-						{
-							add=false;
-							break;
-						}
-					}
-					if(add)
-					{
-						newQuakes ++;
-						$('#newQuakes').text(newQuakes).css({color:'#66FFFF'})
-						 .animate({
-							color:'#FFF'
-						},1200);
-						tempData.push(td0,td1,td2);
-						td.push(td0,td1,td2);
-						globe.addData(td, {format: 'magnitude'});
-						globe.createPoints();
-					}
-				}
-			}
-			else
-			{
-                //convert data stream to magnitude array [lat,lon,mag]                
-                tempData = data;
-                globe.addData(tempData, {format: 'magnitude'});
-                globe.createPoints();
-			}
+	    var url = "/mangolabs"; //"http://www.mangoflash.com/quake_JSON.cfm"; // json.php?count='+count
+        var requestData = {
+            count : c,
+            myMag : mag
+        }
+        //var buildUrl = url + "?count="+ c +"&myMag=" + mag;
+        //console.log(buildUrl);
+        $http({
+            method: 'GET',
+            url: url + "?count="+requestData.count + "&myMag=" + requestData.myMag
+            }).then(function successCallback(response) {
+                var data = response.data;
+                if(reset === true){
+                    tempData = null;
+                    globe.reset();
+                }
+                data = ConvertQuakeData(data.quakes);
+                console.log("Data:" + data);
+                if(tempData!=null){
+                    var td = [];
+                    for(var i = 0; i < data.length ; i+=3)
+                    {
+                        var td0 = data[i];
+                        var td1 = data[i+1];
+                        var td2 = data[i+2];
+                        var add = true;
+                        for(var x = 0; x < tempData.length; x+=3)
+                        {
+                            add = true;
+                            if(td0 == tempData[x] &&
+                                td1 == tempData[x+1] &&
+                                td2 == tempData[x+2])
+                            {
+                                add=false;
+                                break;
+                            }
+                        }
+                        if(add)
+                        {
+                            newQuakes ++;
+                            $('#newQuakes').text(newQuakes).css({color:'#66FFFF'})
+                            .animate({
+                                color:'#FFF'
+                            },1200);
+                            tempData.push(td0,td1,td2);
+                            td.push(td0,td1,td2);
+                            globe.addData(td, {format: 'magnitude'});
+                            globe.createPoints();
+                        }
+                    }
+                }
+                else
+                {
+                    //convert data stream to magnitude array [lat,lon,mag]                
+                    tempData = data;
+                    globe.addData(tempData, {format: 'magnitude'});
+                    globe.createPoints();
+                }
+            }, function errorCallback(response) {
+                console.log('Error: ' + JSON.stringify(response));
+            });
+		$.getJSON(url, requestData, function(data){
+            
 		});		
 	
 	}
