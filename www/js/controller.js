@@ -25,7 +25,6 @@ app.controller('quakeController', function($scope, $ionicGesture, $http, mangoLa
         console.log("update Data");
         mangoLabs.getData(c, mag)
             .then(function successCallback(response) {
-                $scope.newQuakes = count;
                 var data = response.data;
                 if(reset === true){
                     tempData = null;
@@ -54,7 +53,6 @@ app.controller('quakeController', function($scope, $ionicGesture, $http, mangoLa
                         }
                         if(add)
                         {
-                            $scope.newQuakes ++;
                             $('#newQuakes').css({color:'#66FFFF'})
                             .animate({
                                 color:'#FFF'
@@ -73,6 +71,7 @@ app.controller('quakeController', function($scope, $ionicGesture, $http, mangoLa
                     globe.addData(tempData, {format: 'magnitude'});
                     globe.createPoints();
                 }
+                $scope.newQuakes = tempData.length / 3; //have to divide by 3 because each quake takes 3 slots in the array
             }, 
             function errorCallback(response) {
                 $scope.loading = false;
@@ -120,7 +119,6 @@ app.controller('quakeController', function($scope, $ionicGesture, $http, mangoLa
         $('.active').removeClass('active');
         $('#count'+count).addClass('active');
         tempData = null;
-        $scope.newQuakes = count;
         globe = new DAT.Globe(container, {}, $ionicGesture, $scope);	 
         globe.animate();
         updateData(count);
