@@ -18,7 +18,6 @@ var SPIN_ID=0;
 
 DAT.Globe = function(container, opts, $ionicGesture) {
   opts = opts || {};
-  console.log($ionicGesture);
   var colorFn = opts.colorFn || function(x) {
     var c = new THREE.Color();
     c.setHSL( ( 0.6 - ( x * 0.09 ) ), 1.0, .5 );
@@ -325,14 +324,12 @@ DAT.Globe = function(container, opts, $ionicGesture) {
   
   function onPinchIn(event){
     event.preventDefault();
-    console.log(event.gesture.scale * 0.3);
     zoom(event.gesture.scale * -25);
     return false;
   }
   
   function onPinchOut(event){
     event.preventDefault();
-    console.log(event.gesture.scale * 0.3);
     zoom(event.gesture.scale * 25);
     return false;
   }
