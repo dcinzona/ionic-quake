@@ -41,6 +41,7 @@ app.controller('quakeController', function($scope, $ionicGesture, $http, mangoLa
     }
     
 	function updateData(c, reset){
+        console.log("update Data");
         mangoLabs.getData(c, mag)
             .then(function successCallback(response) {
                 $scope.newQuakes = count;

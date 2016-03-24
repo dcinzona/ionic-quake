@@ -11,7 +11,6 @@ var app = angular.module('quake', ['ionic', 'ngCordova'])
       StatusBar.overlaysWebView( true );
       StatusBar.styleBlackOpaque();
       StatusBar.show();
-      console.log("status bar detected");
     }
   });
 })
