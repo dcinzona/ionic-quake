@@ -69,7 +69,7 @@ DAT.Globe = function(container, opts, $ionicGesture) {
     }
   };
 
-  var camera, scene, renderer, w, h;
+  var camera, scene, renderer, controls, w, h;
   var mesh, atmosphere, point;
 
   var overRenderer;
@@ -88,13 +88,14 @@ DAT.Globe = function(container, opts, $ionicGesture) {
   var PI_HALF = Math.PI / 2;
 
   function init() {
-
+      
+    w = container.offsetWidth || window.innerWidth;
+    h = container.offsetHeight || window.innerHeight;
+    
     container.style.color = '#fff';
     container.style.font = '13px/20px Arial, sans-serif';
 
     var shader, uniforms, material;
-    w = container.offsetWidth || window.innerWidth;
-    h = container.offsetHeight || window.innerHeight;
 
     camera = new THREE.PerspectiveCamera(30, w / h, 1, 100000);
     camera.position.z = distance;
@@ -163,24 +164,24 @@ DAT.Globe = function(container, opts, $ionicGesture) {
             map: texture,
             side: THREE.DoubleSide
         }));
-    scene.add(backgroundMesh);
-        
-
-    renderer = new THREE.WebGLRenderer({antialias: true});
-    renderer.setSize(w, h);
-
-    renderer.domElement.style.position = 'absolute';
-
-    container.appendChild(renderer.domElement);
-
-    document.addEventListener('keydown', onDocumentKeyDown, false);
-
-    window.addEventListener('resize', onWindowResize, false);
+    scene.add(backgroundMesh);       
     
     SPIN_ID = setInterval(function() {
         rotate();
     }, 1000 / 60);
     
+
+    renderer = new THREE.WebGLRenderer({antialias: true});
+    renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.setSize(w, h);
+
+    //renderer.domElement.style.position = 'absolute';
+
+    container.appendChild(renderer.domElement);
+    
+    container.addEventListener('mousewheel', onMouseWheel, false);
+    document.addEventListener('keydown', onDocumentKeyDown, false);
+    window.addEventListener('resize', onWindowResize, false);
   }
 
   addData = function(data, opts) {
@@ -309,6 +310,22 @@ DAT.Globe = function(container, opts, $ionicGesture) {
   
   function onDrag(event){
         var gesture = event.gesture;
+        var e = event;
+        var pX = e.gesture.center.pageX;
+        var pY = e.gesture.center.pageY;
+        //console.log("x: "+ pX + "  y:"+ pY);
+        
+        mouse.x = -pX;
+        mouse.y = pY;
+
+        var zoomDamp = distance / 1000;
+
+        target.x = targetOnDown.x + (mouse.x - mouseOnDown.x) * 0.005 * zoomDamp;
+        target.y = targetOnDown.y + (mouse.y - mouseOnDown.y) * 0.005 * zoomDamp;
+
+        target.y = target.y > PI_HALF ? PI_HALF : target.y;
+        target.y = target.y < -PI_HALF ? -PI_HALF : target.y;
+        /*
         
         var dX = - gesture.deltaX;
         var dY = gesture.deltaY;
@@ -320,6 +337,25 @@ DAT.Globe = function(container, opts, $ionicGesture) {
 
         target.y = target.y > PI_HALF ? PI_HALF : target.y;
         target.y = target.y < - PI_HALF ? - PI_HALF : target.y;
+        */
+  }
+  function onStartTouch(e){
+      
+        var pX = e.gesture.center.pageX;
+        var pY = e.gesture.center.pageY;
+      
+        mouseOnDown.x = -pX;
+        mouseOnDown.y = pY;
+
+        targetOnDown.x = target.x;
+        targetOnDown.y = target.y;
+
+      //console.log("x: "+ pX + "  y:"+ pY);
+  }
+  function onEndTouch(e){
+      var pX = e.gesture.center.pageX;
+      var pY = e.gesture.center.pageY;
+      //console.log("x: "+ pX + "  y:"+ pY);
   }
   
   function onPinchIn(event){
@@ -334,6 +370,11 @@ DAT.Globe = function(container, opts, $ionicGesture) {
     return false;
   }
 
+    function onMouseWheel(event) {
+        event.preventDefault();
+        zoom(event.wheelDeltaY * 0.3);
+        return false;
+    }
 
   function onDocumentKeyDown(event) {
     switch (event.keyCode) {
@@ -365,23 +406,19 @@ DAT.Globe = function(container, opts, $ionicGesture) {
   }
 
   function animate() {
-    requestAnimationFrame(animate);
+    requestAnimationFrame(animate);    
     render();
   }
   
   function render() {
     zoom(curZoomSpeed);
-
     rotation.x += (target.x - rotation.x) * 0.1;
     rotation.y += (target.y - rotation.y) * 0.1;
     distance += (distanceTarget - distance) * 0.3;
-
     camera.position.x = distance * Math.sin(rotation.x) * Math.cos(rotation.y);
     camera.position.y = distance * Math.sin(rotation.y);
     camera.position.z = distance * Math.cos(rotation.x) * Math.cos(rotation.y);
-
     camera.lookAt(mesh.position);
-
     renderer.render(scene, camera);
   }
 
@@ -428,6 +465,8 @@ DAT.Globe = function(container, opts, $ionicGesture) {
   this.scene = scene;
   this.reset = reset;
   this.onDrag = onDrag;
+  this.onStartTouch = onStartTouch;
+  this.onEndTouch = onEndTouch;
   this.onPinchIn = onPinchIn;
   this.onPinchOut = onPinchOut;
 

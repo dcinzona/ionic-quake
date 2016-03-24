@@ -8,26 +8,7 @@ app.controller('quakeController', function($scope, $ionicGesture, $http, mangoLa
     var mag = 1.5;
 	var interval;
     var globe = {};
-    
-            
-    $scope.init = function(){
-        var container = document.getElementById('container');
-        $scope.loading = true;
-        $('.active').removeClass('active');
-        $('#count'+count).addClass('active');
-        tempData = null;
-        $scope.newQuakes = count;
-        globe = new DAT.Globe(container, {}, $ionicGesture);	 
-        globe.animate();
-        enableTouch();
-        updateData(count);
-        if(interval)
-            clearInterval(interval);
-        interval = setInterval(function(){
-            updateData(count);
-        },60000);// 3000000);
-    }
-    
+        
     $scope.updateCount = function(c){
         $scope.loading = true; //only show loading when manually triggered
         updateCount(c);
@@ -114,12 +95,40 @@ app.controller('quakeController', function($scope, $ionicGesture, $http, mangoLa
             globe.onDrag(e);  
         }, element);
         
+        $ionicGesture.on('touch', function(e){
+            globe.onStartTouch(e);
+        }, element);
+                
+        $ionicGesture.on('release', function(e){
+            globe.onEndTouch(e);
+        }, element);
+        
         $ionicGesture.on('pinchin', function(e){
             globe.onPinchIn(e);
         }, element);
         
         $ionicGesture.on('pinchout', function(e){
             globe.onPinchOut(e);
-        }, element);
+        }, element);      
+        
+    }
+    
+            
+    $scope.init = function(){
+        var container = document.getElementById('container');
+        $scope.loading = true;
+        $('.active').removeClass('active');
+        $('#count'+count).addClass('active');
+        tempData = null;
+        $scope.newQuakes = count;
+        globe = new DAT.Globe(container, {}, $ionicGesture);	 
+        globe.animate();
+        updateData(count);
+        if(interval)
+            clearInterval(interval);
+        interval = setInterval(function(){
+            updateData(count);
+        },60000);// 3000000);
+        enableTouch();
     }
 });
