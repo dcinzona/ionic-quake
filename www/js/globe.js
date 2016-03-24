@@ -16,7 +16,7 @@ var DAT = DAT || {};
 
 var SPIN_ID=0;
 
-DAT.Globe = function(container, opts, $ionicGesture) {
+DAT.Globe = function(container, opts, $ionicGesture, $scope) {
   opts = opts || {};
   var colorFn = opts.colorFn || function(x) {
     var c = new THREE.Color();
@@ -182,8 +182,29 @@ DAT.Globe = function(container, opts, $ionicGesture) {
     container.addEventListener('mousewheel', onMouseWheel, false);
     document.addEventListener('keydown', onDocumentKeyDown, false);
     window.addEventListener('resize', onWindowResize, false);
+    
+    
+    console.log("Window.Cordova: " + window.cordova);
+    if (window.DeviceOrientationEvent) {
+        /*
+        // Listen for the deviceorientation event and handle the raw data
+        window.addEventListener('deviceorientation', function(eventData) {
+            // gamma is the left-to-right tilt in degrees, where right is positive
+            var tiltLR = eventData.gamma;
+            // beta is the front-to-back tilt in degrees, where front is positive
+            var tiltFB = eventData.beta;
+            // alpha is the compass direction the device is facing in degrees
+            var dir = eventData.alpha
+            // call our orientation event handler
+            deviceOrientationHandler(tiltLR, tiltFB, dir);
+            
+        }, false);
+        */
+    }
+    controls = new THREE.DeviceOrientationControls(mesh);
+    
   }
-
+  
   addData = function(data, opts) {
     var lat, lng, size, color, i, step, colorFnWrapper;
 
@@ -307,13 +328,34 @@ DAT.Globe = function(container, opts, $ionicGesture) {
     subgeo.merge(line.geometry, line.matrix);
   }
 
+  var touching = false;
+  var startOrientation = {
+      tiltLR : null,
+      tiltFB : null      
+  }
+  
+  function deviceOrientationHandler(tiltLR, tiltFB, dir){
+      
+      if(!touching){
+        console.log('tiltLR: ' + tiltLR)
+        console.log('tiltFB: ' + tiltFB)
+        console.log('dir: ' + dir)
+        if(startOrientation.tiltLR == null){
+            startOrientation.tiltLR = tiltLR;
+            startOrientation.tiltFB = tiltFB;
+        }
+        camera.position.x = startOrientation.tiltLR - tiltLR;
+        camera.position.y = startOrientation.tiltFB - tiltFB;
+      }
+      
+  }  
   
   function onDrag(event){
         var gesture = event.gesture;
         var e = event;
         var pX = e.gesture.center.pageX;
         var pY = e.gesture.center.pageY;
-        //console.log("x: "+ pX + "  y:"+ pY);
+        console.log("x: "+ pX + "  y:"+ pY);
         
         mouse.x = -pX;
         mouse.y = pY;
@@ -325,37 +367,23 @@ DAT.Globe = function(container, opts, $ionicGesture) {
 
         target.y = target.y > PI_HALF ? PI_HALF : target.y;
         target.y = target.y < -PI_HALF ? -PI_HALF : target.y;
-        /*
-        
-        var dX = - gesture.deltaX;
-        var dY = gesture.deltaY;
-
-        var zoomDamp = distance/1000;
-
-        target.x += dX * 0.0005// * zoomDamp;//targetOnDown.x + (mouse.x - mouseOnDown.x) * 0.005 * zoomDamp;
-        target.y += dY *0.0005// * zoomDamp; //targetOnDown.y + (mouse.y - mouseOnDown.y) * 0.005 * zoomDamp;
-
-        target.y = target.y > PI_HALF ? PI_HALF : target.y;
-        target.y = target.y < - PI_HALF ? - PI_HALF : target.y;
-        */
   }
+  
   function onStartTouch(e){
       
-        var pX = e.gesture.center.pageX;
-        var pY = e.gesture.center.pageY;
-      
-        mouseOnDown.x = -pX;
-        mouseOnDown.y = pY;
+      touching = true;
+      var pX = e.gesture.center.pageX;
+      var pY = e.gesture.center.pageY;
+      mouseOnDown.x = -pX;
+      mouseOnDown.y = pY;
 
-        targetOnDown.x = target.x;
-        targetOnDown.y = target.y;
-
-      //console.log("x: "+ pX + "  y:"+ pY);
+      targetOnDown.x = target.x;
+      targetOnDown.y = target.y;
   }
   function onEndTouch(e){
       var pX = e.gesture.center.pageX;
       var pY = e.gesture.center.pageY;
-      //console.log("x: "+ pX + "  y:"+ pY);
+      touching = false;
   }
   
   function onPinchIn(event){
@@ -370,11 +398,11 @@ DAT.Globe = function(container, opts, $ionicGesture) {
     return false;
   }
 
-    function onMouseWheel(event) {
-        event.preventDefault();
-        zoom(event.wheelDeltaY * 0.3);
-        return false;
-    }
+  function onMouseWheel(event) {
+    event.preventDefault();
+    zoom(event.wheelDeltaY * 0.3);
+    return false;
+  }
 
   function onDocumentKeyDown(event) {
     switch (event.keyCode) {
@@ -406,7 +434,8 @@ DAT.Globe = function(container, opts, $ionicGesture) {
   }
 
   function animate() {
-    requestAnimationFrame(animate);    
+    requestAnimationFrame(animate);
+	controls.update();
     render();
   }
   
@@ -421,7 +450,7 @@ DAT.Globe = function(container, opts, $ionicGesture) {
     camera.lookAt(mesh.position);
     renderer.render(scene, camera);
   }
-
+  
   init();
   this.animate = animate;
 

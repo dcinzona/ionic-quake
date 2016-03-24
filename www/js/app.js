@@ -5,13 +5,14 @@
 // the 2nd parameter is an array of 'requires'
 var app = angular.module('quake', ['ionic', 'ngCordova'])
 
-.run(function($ionicPlatform) {
+.run(function($ionicPlatform, $cordovaDeviceMotion) {
   $ionicPlatform.ready(function() {
     if(window.StatusBar) {
       StatusBar.overlaysWebView( true );
       StatusBar.styleBlackOpaque();
       StatusBar.show();
     }
+    console.log("TEST");
   });
 })
 

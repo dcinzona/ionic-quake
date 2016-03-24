@@ -1,5 +1,5 @@
 
-app.controller('quakeController', function($scope, $ionicGesture, $http, mangoLabs){
+app.controller('quakeController', function($scope, $ionicGesture, $http, mangoLabs, $cordovaDeviceMotion){
     
 	$scope.newQuakes = 0;
     
@@ -110,7 +110,7 @@ app.controller('quakeController', function($scope, $ionicGesture, $http, mangoLa
         $ionicGesture.on('pinchout', function(e){
             globe.onPinchOut(e);
         }, element);      
-        
+              
     }
     
             
@@ -121,7 +121,7 @@ app.controller('quakeController', function($scope, $ionicGesture, $http, mangoLa
         $('#count'+count).addClass('active');
         tempData = null;
         $scope.newQuakes = count;
-        globe = new DAT.Globe(container, {}, $ionicGesture);	 
+        globe = new DAT.Globe(container, {}, $ionicGesture, $scope);	 
         globe.animate();
         updateData(count);
         if(interval)
